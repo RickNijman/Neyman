@@ -1,0 +1,85 @@
+---
+title: "Exercise 5 - A reproducible workflow in rmarkdown"
+name: Rick
+output: html_document
+---
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(dplyr)
+library(magrittr)
+```
+
+---
+
+### Sample 100 samples (n = 10) from a standard normal distribution.
+```{r}
+#empty container
+samples <- matrix(NA, 10, 100)
+
+#100 sample met n=10
+for (i in 1:100){
+samples[,i] <- rnorm(10, mean=0, sd=1)
+}
+
+#First five samples
+samples[1:10, 1:5]
+```
+
+---
+
+### For each of these samples, calculate the following statistics for the mean:
+
+$Bias = \mu - \bar{x}$
+
+$Standard \: error = \frac{s}{\sqrt{n}}$
+
+$Confidence \: intervals = \mu \pm SE * 1.96$
+
+
+```{r}
+#population mean
+popmean <- 0
+
+#sample means
+sample_means <- apply(samples, 2, mean)
+sample_sd <- apply(samples, 2, sd)
+
+#absolute bias
+bias <- sample_means - popmean
+
+#standard error of the mean = standard deviation of the sampling distribution
+SE <- sample_sd/ sqrt(10)
+
+#lower bound 95% CI
+CI_low <- sample_means - (1.96 * SE)
+CI_high <- sample_means + (1.96 * SE)
+
+#create one dataframe
+df <- as.data.frame(cbind(samplenr = 1:100,sample_means, CI_low, CI_high))
+
+head(df)
+```
+
+---
+
+### Create a plot that demonstrates the following:
+
+***“A replication of the procedure that generates a 95% confidence interval that is centered around the sample mean would cover the population value at least 95 out of 100 times”*** (Neyman, 1934)
+
+
+```{r, warning=FALSE, echo=FALSE, message=FALSE}
+require(ggplot2)
+ggplot(df, aes(x = samplenr, y = sample_means)) +
+  geom_point(size = 1) +
+  geom_errorbar(aes(ymax = CI_low, ymin = CI_high)) + geom_hline(yintercept=popmean, col="blue")
+```
+
+---
+
+These are the samples with samples means that fall outside the confidence intervals.
+```{r}
+df[popmean > CI_high | popmean < CI_low,]
+```
+
+---
+
+
